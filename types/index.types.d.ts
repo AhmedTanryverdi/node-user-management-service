@@ -10,6 +10,22 @@ export interface DbConfigTypes {
     };
 }
 
+export interface IUser {
+    id: number;
+    firstname: string;
+    lastname: string;
+    email: string;
+    password: string;
+    role: string;
+}
+
+export interface UserResponse {
+    success: boolean;
+    users?: IUser[] | null;
+    user?: IUser | null;
+    message: string;
+}
+
 declare global {
     namespace Express {
         interface Request {

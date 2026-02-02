@@ -1,29 +1,27 @@
 import {Request, Response} from "express";
-import {getUsersService, registerUser, loginUser, getUserByIdService, blockUserService} from "../services/userService";
+import {getUsersService, registerUserService, loginUserService, getUserByIdService, blockUserService} from "../services/userService";
 import {generateToken} from "../utils/jwt";
 
-export const registerController = async (req: any, res: any) => {
+export const registerUserController = async (req: any, res: any) => {
     try {
-        const {id, firstname, lastname, patronym, birthday,email, password, role, is_active} = req.body;
+        const userdata = req.body;
+        const {id, firstname, lastname, patronym, birthday,email, password, role} = userdata;
 
-        if (!id || !firstname || !lastname || !patronym || !birthday || !email || !password || !is_active) {
+        if (!id || !firstname || !lastname || !patronym || !birthday || !email || !password || !role) {
             return res.status(400).json({
-                error: 'Required fields: id, firstname, lastname, patronym, birthday, email, password, is_active'
+                error: 'Required fields: id, firstname, lastname, patronym, birthday, email, password, role'
             });
         }
-
-        const userdata = {id, firstname, lastname, patronym, birthday,email, password, role, is_active};
-        const result = await registerUser(userdata);
+        const result = await registerUserService(userdata);
 
         res.status(result.success ? 201 : 400).json(result);
     } catch (err: unknown) {
         const mess = err instanceof Error ? err.message : String(err);
-
         res.status(500).json({ message: `Ошибка сервера: ${mess}` });
     }
 };
 
-export const loginController = async (req: Request, res: Response) => {
+export const loginUserController = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
 
@@ -33,9 +31,9 @@ export const loginController = async (req: Request, res: Response) => {
             });
         }
 
-        const result = await loginUser(email, password);
+        const result = await loginUserService(email, password);
 
-        if (result.success) {
+        if (result.success && result.user) {
             // Генерируем JWT-токен
             const token = generateToken({
                 id: result.user.id,
@@ -49,7 +47,8 @@ export const loginController = async (req: Request, res: Response) => {
                 message: result.message,
                 user: {
                     id: result.user.id,
-                    username: result.user.username,
+                    firstname: result.user.firstname,
+                    lastname: result.user.lastname,
                     email: result.user.email,
                     role: result.user.role
                 },
@@ -104,6 +103,7 @@ export const getUsersController = async (req: any, res: any)=>{
 
 export const blockUserController = async (req: Request, res: Response)=>{
     const blockedId = Number(req.params.id);
+
     if(!blockedId){
         res.status(401).json({success: false, message: 'Некоректный параметр id!'})
     }
@@ -112,7 +112,8 @@ export const blockUserController = async (req: Request, res: Response)=>{
 
     const result = await blockUserService(blockedId, Number(currentId), String(currentRole));
 
-    if(result.success){
-        res.status(201).json({success: true, message: `Пользователь c id ${blockedId} заблокирован!`})
+    if(!result.success){
+        res.status(401).json({success: false, message: `Нет прав на выполнение!`})
     }
+    res.status(201).json({success: true, message: `Пользователь c id ${blockedId} заблокирован!`})
 }

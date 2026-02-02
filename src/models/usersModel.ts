@@ -1,9 +1,9 @@
 import {sqlServer} from '../config/database';
-import {IRecordSet} from "mssql";
 import bcrypt from 'bcryptjs';
+import {UserResponse} from "../../types/index.types";
 
 export class UserModel{
-    static async getUsers():Promise<{success: boolean, users: IRecordSet<any> | null, message: string}> {
+    static async getUsers():Promise<UserResponse> {
         try{
             const result = await sqlServer.query`SELECT * FROM users`;
             return {success: true, users: result.recordset, message: "Запрос выполнен!"}
@@ -13,7 +13,7 @@ export class UserModel{
         }
     }
 
-    static async getUserById(id: number):Promise<{success: boolean, user: IRecordSet<any> | null, message: string}> {
+    static async getUserById(id: number):Promise<UserResponse> {
         try{
             const result = await sqlServer.query`
                 select * 
@@ -27,7 +27,7 @@ export class UserModel{
         }
     }
 
-    static async blockUser(blockedId: number, currentId:number){
+    static async blockUser(blockedId: number, currentId:number): Promise<UserResponse>{
         const currentDate = new Date();
         try{
             await  sqlServer.query`
@@ -41,7 +41,7 @@ export class UserModel{
         }
     }
 
-    static async registerUser(userData: any): Promise<{success: boolean, message: string}>{
+    static async registerUser(userData: any): Promise<UserResponse>{
         const {id, firstname, lastname, patronym, birthday,email, password, role, is_active} = userData;
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
@@ -74,12 +74,17 @@ export class UserModel{
         }
     }
 
-    static async findUserByEmail(email: string): Promise<any>{
-        const result = await sqlServer.query`
+    static async findUserByEmail(email: string): Promise<UserResponse>{
+        try {
+            const result = await sqlServer.query`
             SELECT * FROM users WHERE email = ${email}
-        `;
+            `;
 
-        return result.recordset[0] || null;
+            return {success: Boolean(result.recordset.length), user: result.recordset[0], message: 'Запрос выполнен!'};
+        }catch (err: unknown){
+            const message = err instanceof Error ? err.message: String(err);
+            return {success: false, user: null, message: `Ошибка запроса: ${message}`}
+        }
     }
 
     static async verifyPassword(

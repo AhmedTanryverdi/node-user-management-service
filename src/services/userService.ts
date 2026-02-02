@@ -1,23 +1,22 @@
 import {UserModel} from "../models/usersModel";
-import {IRecordSet} from "mssql";
+import {UserResponse} from "../../types/index.types";
 
-export const registerUser = async (userData: any): Promise<{ success: boolean; message: string }> =>{
+export const registerUserService = async (userData: any): Promise<UserResponse> =>{
     const {email} = userData;
+    const {success, message} = await UserModel.findUserByEmail(email);
 
-    const existingUser = await UserModel.findUserByEmail(email);
-
-    if(existingUser){
-        return { success: false, message: 'Пользователь уже существует' };
+    if(success){
+        return { success: false, message };
     }
-
     return  UserModel.registerUser(userData);
 }
 
-export const loginUser = async (
+export const loginUserService = async (
     email: string,
     password: string
-): Promise<{ success: boolean; user: any | null; message: string }> => {
-    const user = await UserModel.findUserByEmail(email);
+): Promise<UserResponse> => {
+    const {user} = await UserModel.findUserByEmail(email);
+
     if (!user) {
         return { success: false, user: null, message: 'Неверное имя пользователя или пароль' };
     }
@@ -30,14 +29,14 @@ export const loginUser = async (
     return { success: true, user, message: 'Вход успешен' };
 };
 
-export const getUsersService = async (role: string):Promise<{success: boolean, users: IRecordSet<any> | null, message: string}> =>{
+export const getUsersService = async (role: string):Promise<UserResponse> =>{
     if(role !== "admin"){
         return {success: false, users: null, message: "Нет прав на получения списка пользователей!"}
     }
     return await UserModel.getUsers();
 }
 
-export const getUserByIdService = async (requestedId: number, currentId: number, role: string): Promise<{success: boolean, user: IRecordSet<any> | null, message: string}>=>{
+export const getUserByIdService = async (requestedId: number, currentId: number, role: string): Promise<UserResponse>=>{
     if(requestedId !== currentId && role !== "admin"){
         return {success: false, user: null, message: "Нет прав на получения пользователя!"}
     }
@@ -45,7 +44,7 @@ export const getUserByIdService = async (requestedId: number, currentId: number,
     return UserModel.getUserById(requestedId);
 }
 
-export const blockUserService = async (blockedId: number, currentId: number, currentRole: string): Promise<{success: boolean, message: string}>=>{
+export const blockUserService = async (blockedId: number, currentId: number, currentRole: string): Promise<UserResponse>=>{
     if(blockedId !== currentId && currentRole !== "admin"){
         return {success: false, message: "Нет прав для выполнения операции!"}
     }

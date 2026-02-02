@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const JWT_SECRET = 'super-secret-key'; //process.env.JWT_SECRET!;
-const JWT_EXPIRES_IN = '1h'; //process.env.JWT_EXPIRES_IN || ;
+const JWT_SECRET: string = process.env.JWT_SECRET as string;
+const JWT_EXPIRES_IN = '1h';
 
 export const generateToken = (payload: object): string => {
 
