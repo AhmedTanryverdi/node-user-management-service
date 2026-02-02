@@ -1,5 +1,5 @@
 import sql from 'mssql';
-import {DbConfigTypes} from '../../types/dbconfig.types';
+import {DbConfigTypes} from '../../types/index.types';
 import dotenv from 'dotenv';
 
 dotenv.config();

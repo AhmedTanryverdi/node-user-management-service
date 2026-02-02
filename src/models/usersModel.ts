@@ -3,13 +3,42 @@ import {IRecordSet} from "mssql";
 import bcrypt from 'bcryptjs';
 
 export class UserModel{
-    static async getAllAdminUsers(role: string):Promise<IRecordSet<any>>{
-        const result = await sqlServer.query`
-                SELECT * 
-                FROM users AS u
-                WHERE u.role = ${role}
-            `;
-        return result.recordset;
+    static async getUsers():Promise<{success: boolean, users: IRecordSet<any> | null, message: string}> {
+        try{
+            const result = await sqlServer.query`SELECT * FROM users`;
+            return {success: true, users: result.recordset, message: "Запрос выполнен!"}
+        }catch(err: unknown){
+            const message = err instanceof Error ? err.message: String(err);
+            return {success: false, users: null, message: `Не удалось выпольнить запрос! Ошибка: ${message}`}
+        }
+    }
+
+    static async getUserById(id: number):Promise<{success: boolean, user: IRecordSet<any> | null, message: string}> {
+        try{
+            const result = await sqlServer.query`
+                select * 
+                from users as u 
+                where u.id = ${id}
+            `
+            return {success: true, user: result.recordset[0], message: "Запрос успешно выполнен!"};
+        }catch (err: unknown){
+            const message = err instanceof Error ? err.message: String(err);
+            return {success: false, user: null, message: `Ошибка запроса: ${message}`};
+        }
+    }
+
+    static async blockUser(blockedId: number, currentId:number){
+        const currentDate = new Date();
+        try{
+            await  sqlServer.query`
+                INSERT INTO blocked_users (user_id, blocked_at, unblocked_at, blocked_by)
+                VALUES (${blockedId}, ${currentDate}, null, ${currentId});
+            `
+            return {success: true, message: `Пользователь с id ${blockedId} заблокирован!`}
+        }catch (err: unknown){
+            const message = err instanceof Error ? err.message: String(err);
+            return {success: false, message: `Операция блокировки не выполнена: ${message}`}
+        }
     }
 
     static async registerUser(userData: any): Promise<{success: boolean, message: string}>{

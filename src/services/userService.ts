@@ -1,10 +1,5 @@
 import {UserModel} from "../models/usersModel";
 import {IRecordSet} from "mssql";
-import bcrypt from "bcryptjs";
-
-export const getAllAdminUsers = async (role: string):Promise<IRecordSet<any>> =>{
-    return UserModel.getAllAdminUsers(role);
-}
 
 export const registerUser = async (userData: any): Promise<{ success: boolean; message: string }> =>{
     const {email} = userData;
@@ -34,3 +29,26 @@ export const loginUser = async (
 
     return { success: true, user, message: 'Вход успешен' };
 };
+
+export const getUsersService = async (role: string):Promise<{success: boolean, users: IRecordSet<any> | null, message: string}> =>{
+    if(role !== "admin"){
+        return {success: false, users: null, message: "Нет прав на получения списка пользователей!"}
+    }
+    return await UserModel.getUsers();
+}
+
+export const getUserByIdService = async (requestedId: number, currentId: number, role: string): Promise<{success: boolean, user: IRecordSet<any> | null, message: string}>=>{
+    if(requestedId !== currentId && role !== "admin"){
+        return {success: false, user: null, message: "Нет прав на получения пользователя!"}
+    }
+
+    return UserModel.getUserById(requestedId);
+}
+
+export const blockUserService = async (blockedId: number, currentId: number, currentRole: string): Promise<{success: boolean, message: string}>=>{
+    if(blockedId !== currentId && currentRole !== "admin"){
+        return {success: false, message: "Нет прав для выполнения операции!"}
+    }
+
+    return UserModel.blockUser(blockedId, currentId);
+}
