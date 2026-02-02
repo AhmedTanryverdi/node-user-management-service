@@ -22,7 +22,7 @@
 git clone  https://github.com/AhmedTanryverdi/node-user-management-service.git
 
 ```
-### 2.Клонирование репозитория
+### 2. Установка зависимостей
 ```
 npm install
 ```
